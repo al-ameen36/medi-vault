@@ -91,5 +91,7 @@ def add_user(db: Client, user: UserCreateType):
 
 
 def delete_user(db: Client, user_id: int):
-    user = {}
+    get_user(db, user_id=user_id)
+
+    db.table("users").delete().eq("id", user_id).execute()
     return True
