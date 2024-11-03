@@ -51,7 +51,7 @@ def dispense_prescription(
     }
 
 
-@router.post("/")
+@router.post("")
 async def create_prescriptions(
     prescription: PrescriptionCreateType,
     current_user: Annotated[UserType, Depends(get_current_user)],
@@ -59,7 +59,7 @@ async def create_prescriptions(
 ):
     prescription = add_prescription(db, current_user.id, prescription)
     return {
-        "detail": "Prescription fetched successfully",
+        "detail": "Prescription added successfully",
         "data": prescription.model_dump(),
     }
 

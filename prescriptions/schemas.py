@@ -11,7 +11,6 @@ class Drug(BaseModel):
 class PrescriptionBase(BaseModel):
     condition: str
     prescription: list[Drug]
-    status: str
 
 
 class PrescriptionCreateType(PrescriptionBase):
@@ -22,3 +21,4 @@ class PrescriptionType(PrescriptionBase):
     id: int
     patient: UserType
     doctor: UserType
+    status: str
