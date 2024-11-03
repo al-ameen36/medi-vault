@@ -3,10 +3,11 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from supabase import Client
+from _tnid import TNID
 from auth.controller import encode_jwt
 from db.controller import get_db
 from users.controller import add_user, check_if_exists, get_user_by_email
-from users.schemas import UserCreateType, UserType
+from users.schemas import UserCreateInput, UserCreateType, UserType
 
 
 SECRET = os.environ.get("SECRET")
@@ -31,6 +32,24 @@ async def login(
 
 
 @router.post("/user")
-async def create_user(user: UserCreateType, db: Client = Depends(get_db)):
-    db_user = add_user(db, user)
+async def create_user(user: UserCreateInput, db: Client = Depends(get_db)):
+    tnid = TNID()
+    tnid_user = await tnid.fetch_user(email=user.email)
+    if not tnid_user:
+        raise HTTPException(status_code=401, detail="User must be registered on TNID")
+
+    tnid.invite_user(user.email, user.role, "CUSTOMER")
+
+    user_to_create = UserCreateType(
+        dob=tnid_user["birthdate"],
+        email=user.email,
+        first_name=tnid_user["firstName"],
+        last_name=tnid_user["lastName"],
+        username=tnid_user["username"],
+        role=user.role.lower(),
+        password=user.password,
+        phone_number=user.phone_number,
+    )
+    db_user = add_user(db, user_to_create)
+
     return {"response": "User created successfully", "data": db_user}

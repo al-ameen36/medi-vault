@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import requests
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
+from typing import Optional
+
 
 load_dotenv()
 
@@ -34,7 +36,7 @@ class TNID:
                 f"Failed to retrieve token: {response.status_code} {response.text}"
             )
 
-    def invite_user(self, user_email, user_role, connection_type):
+    async def invite_user(self, user_email, user_role, connection_type):
         # Initialize transport with the authorization header
         transport = AIOHTTPTransport(
             url="https://api.staging.v2.tnid.com/company",
@@ -89,6 +91,66 @@ class TNID:
             return response
         except Exception as e:
             print(f"Exception when inviting user: {e}")
+            return None
+
+    # Define the function to execute the query
+    async def fetch_user(
+        self,
+        name: Optional[str] = None,
+        email: Optional[str] = None,
+        telephone_number: Optional[str] = None,
+    ):
+        # Set up the transport with the authorization header
+        transport = AIOHTTPTransport(
+            url="https://api.staging.v2.tnid.com/company",
+            headers={"Authorization": f"Bearer {self.token}"},
+        )
+
+        # Create the GraphQL client
+        client = Client(transport=transport, fetch_schema_from_transport=True)
+
+        # Define the GraphQL query
+        query = gql(
+            """
+            query (
+                $name: String
+                $email: String
+                $telephoneNumber: String
+            ) {
+                users (
+                    name: $name
+                    email: $email
+                    telephoneNumber: $telephoneNumber
+                ) {
+                    id
+                    firstName
+                    lastName
+                    middleName
+                    birthdate
+                    username
+                    aboutMe
+                }
+            }
+            """
+        )
+
+        # Set up the query parameters
+        params = {
+            "name": name,
+            "email": email,
+            "telephoneNumber": telephone_number,
+        }
+
+        # Execute the query
+        try:
+            async with client as session:
+                response = await session.execute(query, variable_values=params)
+                if not len(response["users"]):
+                    return None
+                else:
+                    return response["users"][0]
+        except Exception as e:
+            print(f"Exception while fetching users: {e}")
             return None
 
 

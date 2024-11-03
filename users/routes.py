@@ -44,7 +44,6 @@ def is_pharmacy(user: UserType = Depends(get_current_user)):
 
 
 @router.get("/")
-# async def read_users(current_user: Annotated[UserType, Depends(get_current_user)]):
 async def read_users(db: Annotated[Client, Depends(get_db)]):
     users = get_users(db)
     return {"detail": "User fetched successfully", "data": users}
