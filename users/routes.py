@@ -1,12 +1,13 @@
 import os
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
 from db.controller import get_db
 from users.controller import (
     delete_user,
     get_current_user,
     get_user,
+    get_users,
 )
 from users.schemas import UserType
 
@@ -15,9 +16,38 @@ SECRET = os.environ.get("SECRET")
 router = APIRouter()
 
 
-@router.get("/me")
-async def read_users_me(current_user: Annotated[UserType, Depends(get_current_user)]):
-    return {"detail": "User fetched successfully", "data": current_user}
+def is_doctor(user: UserType = Depends(get_current_user)):
+    if not user.role == "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized",
+        )
+    return True
+
+
+def is_patient(user: UserType = Depends(get_current_user)):
+    if not user.role == "patient":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized",
+        )
+    return True
+
+
+def is_pharmacy(user: UserType = Depends(get_current_user)):
+    if not user.role == "pharmacy":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized",
+        )
+    return True
+
+
+@router.get("/")
+# async def read_users(current_user: Annotated[UserType, Depends(get_current_user)]):
+async def read_users(db: Annotated[Client, Depends(get_db)]):
+    users = get_users(db)
+    return {"detail": "User fetched successfully", "data": users}
 
 
 @router.get("/{user_id}")

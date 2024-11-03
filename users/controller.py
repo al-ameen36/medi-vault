@@ -11,6 +11,14 @@ from users.schemas import UserCreateType, UserType
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+def get_users(db: Client):
+    user = db.table("users").select("*").execute()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return [UserType(**user) for user in user.data]
+
+
 def get_user(db: Client, user_id: int):
     user = db.table("users").select("*").eq("id", user_id).execute()
 
@@ -21,7 +29,7 @@ def get_user(db: Client, user_id: int):
 
 def check_if_exists(db: Client, email: int):
     try:
-        user = db.table("users").select("*").eq("email", email).execute()
+        user = db.table("users").select("id").eq("email", email).execute()
     except Exception as error:
         print(error)
         raise HTTPException(status_code=404, detail="User not found")
@@ -62,15 +70,6 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
-
-
-def is_supervisor(user: UserType = Depends(get_current_user)):
-    if not user.role == "supervisor":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized",
-        )
-    return True
 
 
 def add_user(db: Client, user: UserCreateType):
