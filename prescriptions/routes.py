@@ -14,6 +14,7 @@ from prescriptions.schemas import PrescriptionCreateType
 from users.controller import (
     get_current_user,
 )
+from users.routes import is_doctor
 from users.schemas import UserType
 
 
@@ -44,6 +45,7 @@ def dispense_prescription(
     dispenser_id: int,
     prescription_id: int,
     db: Client = Depends(get_db),
+    is_doctor: Client = Depends(is_doctor),
 ):
     dispense_presc(db, prescription_id, dispenser_id)
     return {
@@ -56,6 +58,7 @@ async def create_prescriptions(
     prescription: PrescriptionCreateType,
     current_user: Annotated[UserType, Depends(get_current_user)],
     db: Client = Depends(get_db),
+    is_doctor: Client = Depends(is_doctor),
 ):
     prescription = add_prescription(db, current_user.id, prescription)
     return {

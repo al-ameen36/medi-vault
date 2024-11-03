@@ -60,8 +60,16 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = decode_jwt(token)
-    user = get_user_by_email(db, email=user["email"])
+    try:
+        user = decode_jwt(token)
+        user = get_user_by_email(db, email=user["email"])
+    except Exception as error:
+        print(error)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if not user:
         raise HTTPException(

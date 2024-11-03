@@ -16,11 +16,20 @@ SECRET = os.environ.get("SECRET")
 router = APIRouter()
 
 
+def is_admin(user: UserType = Depends(get_current_user)):
+    if not user.role == "admin":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authorized. Must be an admin",
+        )
+    return True
+
+
 def is_doctor(user: UserType = Depends(get_current_user)):
     if not user.role == "doctor":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized",
+            detail="Not authorized. Must be a doctor",
         )
     return True
 
@@ -29,7 +38,7 @@ def is_patient(user: UserType = Depends(get_current_user)):
     if not user.role == "patient":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized",
+            detail="Not authorized. Must be a patient",
         )
     return True
 
@@ -38,7 +47,7 @@ def is_pharmacy(user: UserType = Depends(get_current_user)):
     if not user.role == "pharmacy":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authorized",
+            detail="Not authorized.  Must be a pharmacy",
         )
     return True
 
@@ -62,6 +71,7 @@ def read_user(user_id: int, db: Client = Depends(get_db)):
 async def delete_users_me(
     user_id: int,
     db: Client = Depends(get_db),
+    is_admin: Client = Depends(is_admin),
 ):
     delete_user(db, user_id)
     return {"detail": "User deleted successfully"}
